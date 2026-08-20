@@ -1,53 +1,33 @@
 #!/bin/bash
 
-# 1. Teclado English (US, intl., with dead keys) - La opción de tu foto
+# 1. Aplicar teclado English (US, intl., with dead keys)
 setxkbmap -layout us -variant intl
 
-# 2. Ruta de configuración de Openbox
-mkdir -p ~/.config/openbox
-CONFIG_FILE="$HOME/.config/openbox/lxqt-rc.xml"
+# 2. Configurar atajos directamente en LXQt
+SHORTCUT_DIR="$HOME/.config/lxqt"
+mkdir -p "$SHORTCUT_DIR"
 
-# Si no existe localmente, copiar la plantilla base del sistema
-if [ ! -f "$CONFIG_FILE" ]; then
-    if [ -f "/etc/xdg/openbox/lxqt-rc.xml" ]; then
-        cp /etc/xdg/openbox/lxqt-rc.xml "$CONFIG_FILE"
-    elif [ -f "/etc/xdg/openbox/rc.xml" ]; then
-        cp /etc/xdg/openbox/rc.xml "$CONFIG_FILE"
-    fi
-fi
+# Escribir la configuración de atajos en el archivo de LXQt
+cat << 'EOF' > "$SHORTCUT_DIR/shortcut-keys.conf"
+[Control%2BSuper%2BLeft.1]
+comment=Tile window to left
+exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
 
-# 3. Limpiar atajos previos si existían
-sed -i '/<keybind key="W-Left">/,/<\/keybind>/d' "$CONFIG_FILE"
-sed -i '/<keybind key="W-Right">/,/<\/keybind>/d' "$CONFIG_FILE"
+[Super%2BLeft.2]
+comment=Tile window to left (Win + Left)
+exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
 
-# 4. Insertar los atajos Win + Flecha Izquierda / Derecha
-cat << 'EOF' > /tmp/openbox_keys.xml
-  <keybind key="W-Left">
-    <action name="UnmaximizeFull"/>
-    <action name="MaximizeVert"/>
-    <action name="MoveResizeTo">
-      <x>0</x>
-      <y>0</y>
-      <width>50%</width>
-      <height>100%</height>
-    </action>
-  </keybind>
-  <keybind key="W-Right">
-    <action name="UnmaximizeFull"/>
-    <action name="MaximizeVert"/>
-    <action name="MoveResizeTo">
-      <x>-0</x>
-      <y>0</y>
-      <width>50%</width>
-      <height>100%</height>
-    </action>
-  </keybind>
+[Control%2BSuper%2BRight.3]
+comment=Tile window to right
+exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
+
+[Super%2BRight.4]
+comment=Tile window to right (Win + Right)
+exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=-0 y=0 width=50% height=100%"
 EOF
 
-sed -i '/<\/keyboard>/r /tmp/openbox_keys.xml' "$CONFIG_FILE"
-rm /tmp/openbox_keys.xml
+# 3. Reiniciar el demonio de atajos de LXQt para que tome el archivo sin reiniciar sesión
+killall lxqt-globalkeysd 2>/dev/null
+lxqt-globalkeysd &
 
-# 5. Aplicar cambios inmediatamente
-openbox --reconfigure
-
-echo "Configuración aplicada: Teclado US Intl (dead keys) y atajos Win+Flechas."
+echo "Configuración aplicada."
