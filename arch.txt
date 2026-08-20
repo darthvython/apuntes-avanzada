@@ -1,27 +1,43 @@
+mkdir -p ~/workspace
+cat << 'SCRIPT_EOF' > ~/workspace/setup_keys.sh
 #!/bin/bash
 
 # 1. Aplicar teclado English (US, intl., with dead keys)
 setxkbmap -layout us -variant intl
 
-# 2. Localizar el archivo de configuración real de Openbox
+# 2. Detectar el archivo real de configuración de Openbox
 mkdir -p ~/.config/openbox
-OB_FILE="$HOME/.config/openbox/lxqt-rc.xml"
 
-# Si no existe en el perfil del usuario, lo copiamos de la plantilla base
-if [ ! -f "$OB_FILE" ]; then
-    if [ -f "/etc/xdg/openbox/lxqt-rc.xml" ]; then
-        cp /etc/xdg/openbox/lxqt-rc.xml "$OB_FILE"
-    elif [ -f "/etc/xdg/openbox/rc.xml" ]; then
-        cp /etc/xdg/openbox/rc.xml "$OB_FILE"
-    fi
+if [ -n "$XDG_CURRENT_DESKTOP" ] && echo "$XDG_CURRENT_DESKTOP" | grep -qi "lxqt"; then
+    OB_FILE="$HOME/.config/openbox/lxqt-rc.xml"
+    TEMPLATE="/etc/xdg/openbox/lxqt-rc.xml"
+else
+    OB_FILE="$HOME/.config/openbox/lubuntu-rc.xml"
+    TEMPLATE="/etc/xdg/openbox/lubuntu-rc.xml"
 fi
 
-# 3. Limpiar configuraciones previas de W-Left y W-Right
-sed -i '/<keybind key="W-Left">/,/<\/keybind>/d' "$OB_FILE"
-sed -i '/<keybind key="W-Right">/,/<\/keybind>/d' "$OB_FILE"
+# Fallback si no existe la plantilla específica
+if [ ! -f "$TEMPLATE" ]; then
+    TEMPLATE="/etc/xdg/openbox/rc.xml"
+    [ ! -f "$OB_FILE" ] && OB_FILE="$HOME/.config/openbox/rc.xml"
+fi
 
-# 4. Insertar la acción NATIVA de Openbox (sin depender de programas externos)
-cat << 'EOF' > /tmp/openbox_keys.xml
+# Copiar plantilla si el usuario no tiene config propia
+if [ ! -f "$OB_FILE" ] && [ -f "$TEMPLATE" ]; then
+    cp "$TEMPLATE" "$OB_FILE"
+fi
+
+if [ ! -f "$OB_FILE" ]; then
+    echo "ERROR: no se encontró ningún rc.xml de Openbox" >&2
+    exit 1
+fi
+
+# 3. Limpiar keybinds previos de W-Left y W-Right (cualquier atributo extra)
+sed -i '/<keybind key="W-Left"/,/<\/keybind>/d' "$OB_FILE"
+sed -i '/<keybind key="W-Right"/,/<\/keybind>/d' "$OB_FILE"
+
+# 4. Insertar las acciones nativas
+cat << 'XML_EOF' > /tmp/openbox_keys.xml
   <keybind key="W-Left">
     <action name="Unmaximize"/>
     <action name="MoveResizeTo">
@@ -40,11 +56,11 @@ cat << 'EOF' > /tmp/openbox_keys.xml
       <height>100%</height>
     </action>
   </keybind>
-EOF
+XML_EOF
 
-# Insertar antes de </keyboard>
 sed -i '/<\/keyboard>/r /tmp/openbox_keys.xml' "$OB_FILE"
 rm -f /tmp/openbox_keys.xml
 
-# 5. Forzar la recarga de Openbox
+# 5. Recargar Openbox
 openbox --reconfigure
+SCRIPT_EOF
