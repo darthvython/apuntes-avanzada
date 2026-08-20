@@ -1,30 +1,50 @@
 #!/bin/bash
 
-# 1. Configurar teclado (La variante de tu foto)
+# 1. Aplicar teclado English (US, intl., with dead keys)
 setxkbmap -layout us -variant intl
 
-# 2. Configurar atajos usando los comandos de xdotool directamente en LXQt
-# Esto crea/sobreescribe los atajos de usuario
-mkdir -p "$HOME/.config/lxqt"
+# 2. Localizar el archivo de configuración real de Openbox
+mkdir -p ~/.config/openbox
+OB_FILE="$HOME/.config/openbox/lxqt-rc.xml"
 
-# Definimos los comandos en el archivo de configuración de atajos de LXQt
-cat << 'EOF' > "$HOME/.config/lxqt/globalkeyshortcuts.conf"
-[General]
-AllowGrab=true
+# Si no existe en el perfil del usuario, lo copiamos de la plantilla base
+if [ ! -f "$OB_FILE" ]; then
+    if [ -f "/etc/xdg/openbox/lxqt-rc.xml" ]; then
+        cp /etc/xdg/openbox/lxqt-rc.xml "$OB_FILE"
+    elif [ -f "/etc/xdg/openbox/rc.xml" ]; then
+        cp /etc/xdg/openbox/rc.xml "$OB_FILE"
+    fi
+fi
 
-[left_snap]
-Comment=Snap Left
-Shortcut=Super+Left
-Command=xdotool getactivewindow windowsize 50% 100% windowmove 0 0
+# 3. Limpiar configuraciones previas de W-Left y W-Right
+sed -i '/<keybind key="W-Left">/,/<\/keybind>/d' "$OB_FILE"
+sed -i '/<keybind key="W-Right">/,/<\/keybind>/d' "$OB_FILE"
 
-[right_snap]
-Comment=Snap Right
-Shortcut=Super+Right
-Command=xdotool getactivewindow windowsize 50% 100% windowmove 50% 0
+# 4. Insertar la acción NATIVA de Openbox (sin depender de programas externos)
+cat << 'EOF' > /tmp/openbox_keys.xml
+  <keybind key="W-Left">
+    <action name="Unmaximize"/>
+    <action name="MoveResizeTo">
+      <x>0</x>
+      <y>0</y>
+      <width>50%</width>
+      <height>100%</height>
+    </action>
+  </keybind>
+  <keybind key="W-Right">
+    <action name="Unmaximize"/>
+    <action name="MoveResizeTo">
+      <x>-0</x>
+      <y>0</y>
+      <width>50%</width>
+      <height>100%</height>
+    </action>
+  </keybind>
 EOF
 
-# 3. Reiniciar el gestor de atajos para aplicar
-killall lxqt-globalkeysd 2>/dev/null
-lxqt-globalkeysd &
+# Insertar antes de </keyboard>
+sed -i '/<\/keyboard>/r /tmp/openbox_keys.xml' "$OB_FILE"
+rm -f /tmp/openbox_keys.xml
 
-echo "Configuración aplicada. Prueba Win+Flechas."
+# 5. Forzar la recarga de Openbox
+openbox --reconfigure
