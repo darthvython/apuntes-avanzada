@@ -1,33 +1,30 @@
 #!/bin/bash
 
-# 1. Aplicar teclado English (US, intl., with dead keys)
+# 1. Configurar teclado (La variante de tu foto)
 setxkbmap -layout us -variant intl
 
-# 2. Configurar atajos directamente en LXQt
-SHORTCUT_DIR="$HOME/.config/lxqt"
-mkdir -p "$SHORTCUT_DIR"
+# 2. Configurar atajos usando los comandos de xdotool directamente en LXQt
+# Esto crea/sobreescribe los atajos de usuario
+mkdir -p "$HOME/.config/lxqt"
 
-# Escribir la configuración de atajos en el archivo de LXQt
-cat << 'EOF' > "$SHORTCUT_DIR/shortcut-keys.conf"
-[Control%2BSuper%2BLeft.1]
-comment=Tile window to left
-exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
+# Definimos los comandos en el archivo de configuración de atajos de LXQt
+cat << 'EOF' > "$HOME/.config/lxqt/globalkeyshortcuts.conf"
+[General]
+AllowGrab=true
 
-[Super%2BLeft.2]
-comment=Tile window to left (Win + Left)
-exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
+[left_snap]
+Comment=Snap Left
+Shortcut=Super+Left
+Command=xdotool getactivewindow windowsize 50% 100% windowmove 0 0
 
-[Control%2BSuper%2BRight.3]
-comment=Tile window to right
-exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=0 y=0 width=50% height=100%"
-
-[Super%2BRight.4]
-comment=Tile window to right (Win + Right)
-exec=openbox --send-action "UnmaximizeFull MaximizeVert MoveResizeTo x=-0 y=0 width=50% height=100%"
+[right_snap]
+Comment=Snap Right
+Shortcut=Super+Right
+Command=xdotool getactivewindow windowsize 50% 100% windowmove 50% 0
 EOF
 
-# 3. Reiniciar el demonio de atajos de LXQt para que tome el archivo sin reiniciar sesión
+# 3. Reiniciar el gestor de atajos para aplicar
 killall lxqt-globalkeysd 2>/dev/null
 lxqt-globalkeysd &
 
-echo "Configuración aplicada."
+echo "Configuración aplicada. Prueba Win+Flechas."
