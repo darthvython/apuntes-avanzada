@@ -1,0 +1,29 @@
+local style = require "core.style"
+local common = require "core.common"
+
+-- Paleta de colores VS Code Dark
+style.background   = { common.color "#1E1E1E" }
+style.background2  = { common.color "#252526" }
+style.background3  = { common.color "#2D2D2D" }
+style.text         = { common.color "#D4D4D4" }
+style.panel        = { common.color "#252526" }
+style.panel2       = { common.color "#1E1E1E" }
+style.line_number  = { common.color "#858585" }
+style.line_number2 = { common.color "#C6C6C6" }
+style.line_highlight = { common.color "#2F3239" }
+style.selection    = { common.color "#264F78" }
+style.accent       = { common.color "#007ACC" }
+style.scrollbar    = { common.color "#424242" }
+style.scrollbar2   = { common.color "#4F4F4F" }
+
+-- Resaltado de sintaxis
+style.syntax["normal"]   = { common.color "#D4D4D4" }
+style.syntax["symbol"]   = { common.color "#D4D4D4" }
+style.syntax["comment"]  = { common.color "#6A9955" }
+style.syntax["keyword"]  = { common.color "#569CD6" }
+style.syntax["keyword2"] = { common.color "#C586C0" }
+style.syntax["number"]   = { common.color "#B5CEA8" }
+style.syntax["literal"]  = { common.color "#569CD6" }
+style.syntax["string"]   = { common.color "#CE9178" }
+style.syntax["operator"] = { common.color "#D4D4D4" }
+style.syntax["function"] = { common.color "#DCDCAA" }
